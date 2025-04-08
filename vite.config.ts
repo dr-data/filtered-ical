@@ -295,11 +295,17 @@ export default defineConfig({
     ],
     proxy: {
       '/api': {
-        target: 'https://tockify.com',
+        target: 'http://tockify.com',
         changeOrigin: true,
         rewrite: (path) => {
-          // Convert /api/zetlandhall to /api/feeds/ics/zetlandhall
-          return path.replace(/^\/api\/(.*)/, '/api/feeds/ics/$1');
+          // Handle different API path formats
+          if (path.startsWith('/api/feeds/ics/')) {
+            // If the path already has the full format, keep it as is
+            return path;
+          } else {
+            // Convert /api/{calendar} to /api/feeds/ics/{calendar}
+            return path.replace(/^\/api\/(.*)/, '/api/feeds/ics/$1');
+          }
         },
       }
     }
