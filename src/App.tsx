@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, KeyboardEvent } from 'react';
 import { Calendar, Download, Copy, Filter } from 'lucide-react';
 import { fetchAndParseICal, type ICalEvent, downloadICS, generateICS } from './lib/icalUtils';
 import { fuzzySearch } from './lib/fuzzySearch';
-import { BrowserRouter, Routes, Route, useSearchParams, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useSearchParams, useLocation, useParams } from 'react-router-dom';
 
 const DEFAULT_CALENDAR_URL = '/api/zetlandhall';
 
@@ -79,6 +79,124 @@ function FilteredCalendar() {
 
     fetchAndFilterCalendar();
   }, [url, keywords]);
+
+  // If we have calendar content, display it as plain text
+  if (calendarContent) {
+    return (
+      <pre style={{ 
+        whiteSpace: 'pre-wrap', 
+        display: 'block', 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        width: '100%', 
+        height: '100%', 
+        margin: 0, 
+        padding: 0 
+      }}>
+        {calendarContent}
+      </pre>
+    );
+  }
+
+  // If there's an error or we're still loading, show a minimal UI
+  return (
+    <div style={{ display: 'none' }}>
+      {error ? `Error: ${error}` : 'Loading calendar...'}
+    </div>
+  );
+}
+
+// New component to handle subscription calendar requests with path parameters
+function SubscriptionCalendar() {
+  const { encodedUrl, encodedKeywords } = useParams<{ encodedUrl: string, encodedKeywords: string }>();
+  const [calendarContent, setCalendarContent] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Function to decode base64url to string
+  const base64urlToString = (base64url: string): string => {
+    // Convert base64url to base64
+    const base64 = base64url
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(base64url.length + (4 - base64url.length % 4) % 4, '=');
+    
+    // Decode base64 to string
+    try {
+      return atob(base64);
+    } catch (e) {
+      console.error('Error decoding base64:', e);
+      return '';
+    }
+  };
+
+  useEffect(() => {
+    const fetchAndFilterCalendar = async () => {
+      if (!encodedUrl || !encodedKeywords) {
+        setError('Missing parameters in URL');
+        return;
+      }
+
+      try {
+        // Decode the URL and keywords from base64url format
+        const decodedUrl = base64urlToString(encodedUrl);
+        const decodedKeywords = base64urlToString(encodedKeywords);
+
+        if (!decodedUrl) {
+          setError('Invalid URL parameter');
+          return;
+        }
+
+        const events = await fetchAndParseICal(decodedUrl);
+        
+        let filteredEvents = events;
+        
+        if (decodedKeywords) {
+          const keywordList = decodedKeywords
+            .split(',')
+            .map(k => k.trim())
+            .filter(k => k.length > 0);
+
+          if (keywordList.length > 0) {
+            const includeKeywords = keywordList.filter(k => !k.startsWith('!'));
+            const excludeKeywords = keywordList
+              .filter(k => k.startsWith('!'))
+              .map(k => k.substring(1).trim());
+
+            filteredEvents = events.filter(event => {
+              const isExcluded = excludeKeywords.some(keyword => 
+                event.summary.toLowerCase().includes(keyword.toLowerCase())
+              );
+
+              if (isExcluded) {
+                return false;
+              }
+
+              if (includeKeywords.length === 0) {
+                return true;
+              }
+
+              return includeKeywords.some(keyword => 
+                event.summary.toLowerCase().includes(keyword.toLowerCase())
+              );
+            });
+          }
+        }
+        
+        // Generate iCal content
+        const icsContent = generateICS(filteredEvents);
+        setCalendarContent(icsContent);
+        
+        // Set content type to text/calendar
+        document.getElementsByTagName('html')[0].setAttribute('content-type', 'text/calendar');
+        
+      } catch (e) {
+        setError(`Failed to fetch calendar: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      }
+    };
+
+    fetchAndFilterCalendar();
+  }, [encodedUrl, encodedKeywords]);
 
   // If we have calendar content, display it as plain text
   if (calendarContent) {
@@ -498,6 +616,7 @@ const AppWithRouter = () => (
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/calendar/filtered" element={<FilteredCalendar />} />
+      <Route path="/calendar/:encodedUrl/:encodedKeywords/filtered.ics" element={<SubscriptionCalendar />} />
     </Routes>
   </BrowserRouter>
 );
