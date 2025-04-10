@@ -64,7 +64,7 @@ export default async function handler(req, res) {
     const icsContent = generateICS(filteredEvents);
     
     // Set proper headers for iCalendar content
-    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Type', 'text/calendar'); // Simplified MIME type
     res.setHeader('Content-Disposition', 'inline; filename="calendar.ics"');
     // Ensure no caching to get fresh content
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -81,47 +81,41 @@ export default async function handler(req, res) {
 
 // Function to generate proper iCalendar content
 function generateICS(events) {
-  // Start with required iCalendar headers
   let icsContent = 'BEGIN:VCALENDAR\r\n';
   icsContent += 'VERSION:2.0\r\n';
   icsContent += 'PRODID:-//iCal Filter//EN\r\n';
   icsContent += 'CALSCALE:GREGORIAN\r\n';
   icsContent += 'METHOD:PUBLISH\r\n';
-  
-  // Add each event
+
   events.forEach(event => {
     icsContent += 'BEGIN:VEVENT\r\n';
-    
-    // Format proper date strings
+
+    // Format date strings to iCalendar format (YYYYMMDDTHHMMSS)
     const formatDate = (date) => {
-      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z/, '');
     };
-    
+
     const startDate = new Date(event.startDate);
     const endDate = new Date(event.endDate);
-    
-    // Add core properties
+
     icsContent += `SUMMARY:${escapeText(event.summary)}\r\n`;
     icsContent += `DTSTART:${formatDate(startDate)}\r\n`;
     icsContent += `DTEND:${formatDate(endDate)}\r\n`;
     icsContent += `UID:${event.uid || generateUID()}\r\n`;
-    icsContent += `DTSTAMP:${formatDate(new Date())}\r\n`;
-    
-    // Add optional properties
+    icsContent += `DTSTAMP:${formatDate(new Date())}\r\n`; // Use current date/time for DTSTAMP
+
     if (event.description) {
       icsContent += `DESCRIPTION:${escapeText(event.description)}\r\n`;
     }
-    
+
     if (event.location) {
       icsContent += `LOCATION:${escapeText(event.location)}\r\n`;
     }
-    
+
     icsContent += 'END:VEVENT\r\n';
   });
-  
-  // Close the calendar
+
   icsContent += 'END:VCALENDAR\r\n';
-  
   return icsContent;
 }
 
