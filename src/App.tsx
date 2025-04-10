@@ -109,15 +109,15 @@ function FilteredCalendar() {
 
 // New component to handle subscription calendar requests with path parameters
 function SubscriptionCalendar() {
-  const { encodedUrl, encodedKeywords } = useParams<{ encodedUrl: string, encodedKeywords: string }>();
+  const { encodedUrl } = useParams<{ encodedUrl: string }>();
   
   useEffect(() => {
     // Redirect directly to our dedicated iCalendar subscription API
-    const subscriptionUrl = `/api/icalSubscription?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords || ''}`;
+    const subscriptionUrl = `/api/calendar?encodedUrl=${encodedUrl}`;
     
     // Use replace to avoid adding to browser history
     window.location.replace(subscriptionUrl);
-  }, [encodedUrl, encodedKeywords]);
+  }, [encodedUrl]);
 
   // Empty component during redirect
   return null;
@@ -327,17 +327,16 @@ function App() {
   };
 
   const getSubscriptionUrl = () => {
-    if (!calendarUrl || !keywords) return '';
+    if (!calendarUrl) return '';
     
     try {
-      // Encode the URL and keywords as base64url
+      // Encode the URL as base64url
       const encodedUrl = base64ToBase64url(btoa(calendarUrl));
-      const encodedKeywords = base64ToBase64url(btoa(keywords));
       
       const host = window.location.host;
       
       // Use the subscription format with webcal:// protocol
-      return `webcal://${host}/api/icalSubscription?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords}`;
+      return `webcal://${host}/api/calendar?encodedUrl=${encodedUrl}`;
     } catch (error) {
       console.error('Error encoding subscription URL:', error);
       return '';
@@ -454,7 +453,7 @@ function App() {
                 />
                 <button
                   onClick={handleCopy}
-                  disabled={!keywords || !calendarUrl}
+                  disabled={!calendarUrl}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {copied ? (
@@ -514,7 +513,7 @@ const AppWithRouter = () => (
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/calendar/filtered" element={<FilteredCalendar />} />
-      <Route path="/calendar/:encodedUrl/:encodedKeywords/filtered.ics" element={<SubscriptionCalendar />} />
+      <Route path="/calendar/:encodedUrl/filtered.ics" element={<SubscriptionCalendar />} />
     </Routes>
   </BrowserRouter>
 );

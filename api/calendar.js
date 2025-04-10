@@ -3,8 +3,8 @@ import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
   try {
-    // Get encoded parameters from query
-    const { encodedUrl, encodedKeywords } = req.query;
+    // Get encoded URL from query
+    const { encodedUrl } = req.query;
     
     if (!encodedUrl) {
       return res.status(400).json({ error: 'Missing encodedUrl parameter' });
@@ -25,12 +25,10 @@ export default async function handler(req, res) {
       }
     };
     
-    // Decode parameters
+    // Decode URL
     const calendarUrl = base64Decode(encodedUrl);
-    const keywords = encodedKeywords ? base64Decode(encodedKeywords).split(',') : [];
     
     console.log('Decoded URL:', calendarUrl);
-    console.log('Decoded Keywords:', keywords);
     
     if (!calendarUrl) {
       return res.status(400).json({ error: 'Invalid URL encoding' });
@@ -66,38 +64,6 @@ export default async function handler(req, res) {
     
     console.log(`Fetched ${events.length} events from calendar`);
     
-    // Apply keyword filtering
-    let filteredEvents = events;
-    if (keywords && keywords.length > 0) {
-      const includeKeywords = keywords.filter(k => !k.startsWith('!'));
-      const excludeKeywords = keywords
-        .filter(k => k.startsWith('!'))
-        .map(k => k.substring(1).trim());
-      
-      console.log('Include keywords:', includeKeywords);
-      console.log('Exclude keywords:', excludeKeywords);
-      
-      filteredEvents = events.filter(event => {
-        const isExcluded = excludeKeywords.some(keyword => 
-          event.summary.toLowerCase().includes(keyword.toLowerCase())
-        );
-        
-        if (isExcluded) {
-          return false;
-        }
-        
-        if (includeKeywords.length === 0) {
-          return true;
-        }
-        
-        return includeKeywords.some(keyword => 
-          event.summary.toLowerCase().includes(keyword.toLowerCase())
-        );
-      });
-      
-      console.log(`Filtered to ${filteredEvents.length} events`);
-    }
-    
     // Create a new iCal calendar following fiCal's implementation
     const calendar = new ICAL.Component(['vcalendar', [], []]);
     
@@ -107,7 +73,7 @@ export default async function handler(req, res) {
     calendar.updatePropertyWithValue('version', '2.0');
     
     // Add filtered events to the calendar
-    filteredEvents.forEach(event => {
+    events.forEach(event => {
       const vevent = new ICAL.Component('vevent');
       
       // Convert dates to ICAL.Time

@@ -1,8 +1,8 @@
 import { fetchAndParseICal } from '../src/lib/icalUtils';
 
 export default async function handler(req, res) {
-  // Get the encoded URL and keywords from path parameters
-  const { encodedUrl, encodedKeywords } = req.query;
+  // Get the encoded URL from path parameters
+  const { encodedUrl } = req.query;
   
   if (!encodedUrl) {
     return res.status(400).json({ error: 'Missing encoded URL parameter' });
@@ -23,45 +23,20 @@ export default async function handler(req, res) {
     
     // Decode parameters
     const calendarUrl = base64Decode(encodedUrl);
-    const keywords = encodedKeywords ? base64Decode(encodedKeywords).split(',') : [];
     
     if (!calendarUrl) {
       return res.status(400).json({ error: 'Invalid URL encoding' });
     }
     
     console.log('Fetching calendar from:', calendarUrl);
-    console.log('Filtering with keywords:', keywords);
     
     // Fetch and parse calendar
     const events = await fetchAndParseICal(calendarUrl);
     
-    // Filter events based on keywords
-    let filteredEvents = events;
-    if (keywords && keywords.length > 0) {
-      const includeKeywords = keywords.filter(k => !k.startsWith('!'));
-      const excludeKeywords = keywords
-        .filter(k => k.startsWith('!'))
-        .map(k => k.substring(1).trim());
-      
-      filteredEvents = events.filter(event => {
-        const isExcluded = excludeKeywords.some(keyword => 
-          event.summary.toLowerCase().includes(keyword.toLowerCase())
-        );
-        
-        if (isExcluded) return false;
-        
-        if (includeKeywords.length === 0) return true;
-        
-        return includeKeywords.some(keyword => 
-          event.summary.toLowerCase().includes(keyword.toLowerCase())
-        );
-      });
-    }
-    
-    console.log(`Filtered to ${filteredEvents.length} events`);
+    console.log(`Fetched ${events.length} events`);
     
     // Generate iCalendar content
-    const icsContent = generateICS(filteredEvents);
+    const icsContent = generateICS(events);
     
     // Set proper headers for iCalendar content
     res.setHeader('Content-Type', 'text/calendar'); // Simplified MIME type
