@@ -137,29 +137,63 @@ export default async function handler(req, res) {
       calendar.addSubcomponent(vevent);
     });
     
-    // Generate iCal content
-    let icsContent = calendar.toString();
+    // Instead of using component.toString(), manually build the iCal content
+    // to ensure it strictly follows RFC 5545 format
+    let icsContent = 'BEGIN:VCALENDAR\r\n';
+    icsContent += 'VERSION:2.0\r\n';
+    icsContent += 'PRODID:-//iCal Filter//EN\r\n';
     
-    // Ensure the calendar begins and ends with proper iCalendar format identifier
-    if (!icsContent.startsWith('BEGIN:VCALENDAR')) {
-      icsContent = 'BEGIN:VCALENDAR\r\n' + icsContent;
-    }
-    if (!icsContent.endsWith('END:VCALENDAR')) {
-      icsContent = icsContent + '\r\nEND:VCALENDAR';
-    }
+    // Add all events
+    filteredEvents.forEach(event => {
+      icsContent += 'BEGIN:VEVENT\r\n';
+      
+      // Format dates in iCalendar format
+      const formatDate = (date) => {
+        return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      };
+      
+      const startDateStr = formatDate(new Date(event.startDate));
+      const endDateStr = formatDate(new Date(event.endDate));
+      const nowStr = formatDate(new Date());
+      
+      icsContent += `UID:${event.uid || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`}\r\n`;
+      icsContent += `DTSTAMP:${nowStr}\r\n`;
+      icsContent += `DTSTART:${startDateStr}\r\n`;
+      icsContent += `DTEND:${endDateStr}\r\n`;
+      icsContent += `SUMMARY:${event.summary}\r\n`;
+      
+      if (event.description) {
+        // Escape special characters
+        const description = event.description
+          .replace(/\\/g, '\\\\')
+          .replace(/;/g, '\\;')
+          .replace(/,/g, '\\,')
+          .replace(/\n/g, '\\n');
+        icsContent += `DESCRIPTION:${description}\r\n`;
+      }
+      
+      if (event.location) {
+        const location = event.location
+          .replace(/\\/g, '\\\\')
+          .replace(/;/g, '\\;')
+          .replace(/,/g, '\\,');
+        icsContent += `LOCATION:${location}\r\n`;
+      }
+      
+      icsContent += 'END:VEVENT\r\n';
+    });
     
-    // Replace single line breaks with CRLF
-    icsContent = icsContent.replace(/\r?\n/g, '\r\n');
+    icsContent += 'END:VCALENDAR\r\n';
     
-    // Set proper headers for iCalendar content
-    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    // Set proper Content-Type header for iCalendar
+    res.setHeader('Content-Type', 'text/calendar');
     res.setHeader('Content-Disposition', 'attachment; filename="calendar.ics"');
     // Add cache control headers to ensure fresh content
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     
-    // Simply send the calendar content with a 200 status code
+    // Send the manually constructed iCal content
     res.status(200).send(icsContent);
   } catch (error) {
     console.error('Calendar API error:', error);
