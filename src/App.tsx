@@ -112,18 +112,14 @@ function SubscriptionCalendar() {
   const { encodedUrl, encodedKeywords } = useParams<{ encodedUrl: string, encodedKeywords: string }>();
   
   useEffect(() => {
-    // Construct API URL - make sure this points to your backend API
-    // that properly sets Content-Type: text/calendar and formats the calendar correctly
-    const apiUrl = `/api/calendar?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords || ''}`;
+    // Redirect directly to our dedicated iCalendar subscription API
+    const subscriptionUrl = `/api/icalSubscription?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords || ''}`;
     
-    // Use window.location.replace for a cleaner redirect (no entry in browser history)
-    window.location.replace(apiUrl);
-    
-    // Optional: Log for debugging
-    console.log(`Redirecting to calendar API: ${apiUrl}`);
+    // Use replace to avoid adding to browser history
+    window.location.replace(subscriptionUrl);
   }, [encodedUrl, encodedKeywords]);
 
-  // Return an empty component since we're redirecting
+  // Empty component during redirect
   return null;
 }
 
@@ -334,16 +330,14 @@ function App() {
     if (!calendarUrl || !keywords) return '';
     
     try {
-      // Encode the URL and keywords as base64, then convert to base64url format
+      // Encode the URL and keywords as base64url
       const encodedUrl = base64ToBase64url(btoa(calendarUrl));
       const encodedKeywords = base64ToBase64url(btoa(keywords));
       
-      // Use webcal:// protocol for better calendar client compatibility
       const host = window.location.host;
       
-      // Create a subscription URL that points directly to the API endpoint
-      // This bypasses any client-side rendering for better compatibility
-      return `webcal://${host}/api/calendar?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords}`;
+      // Use the subscription format with webcal:// protocol
+      return `webcal://${host}/api/icalSubscription?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords}`;
     } catch (error) {
       console.error('Error encoding subscription URL:', error);
       return '';
