@@ -138,7 +138,18 @@ export default async function handler(req, res) {
     });
     
     // Generate iCal content
-    const icsContent = calendar.toString();
+    let icsContent = calendar.toString();
+    
+    // Ensure the calendar begins and ends with proper iCalendar format identifier
+    if (!icsContent.startsWith('BEGIN:VCALENDAR')) {
+      icsContent = 'BEGIN:VCALENDAR\r\n' + icsContent;
+    }
+    if (!icsContent.endsWith('END:VCALENDAR')) {
+      icsContent = icsContent + '\r\nEND:VCALENDAR';
+    }
+    
+    // Replace single line breaks with CRLF
+    icsContent = icsContent.replace(/\r?\n/g, '\r\n');
     
     // Set proper headers for iCalendar content
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
@@ -148,14 +159,8 @@ export default async function handler(req, res) {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     
-    // Ensure the calendar begins with proper iCalendar format identifier
-    // This is critical as some validators check for this specific string
-    const formattedIcsContent = icsContent.startsWith('BEGIN:VCALENDAR') 
-      ? icsContent 
-      : `BEGIN:VCALENDAR\r\n${icsContent.replace(/^BEGIN:VCALENDAR\r?\n?/, '')}`;
-    
     // Simply send the calendar content with a 200 status code
-    res.status(200).send(formattedIcsContent);
+    res.status(200).send(icsContent);
   } catch (error) {
     console.error('Calendar API error:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
