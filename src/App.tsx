@@ -110,21 +110,21 @@ function FilteredCalendar() {
 // New component to handle subscription calendar requests with path parameters
 function SubscriptionCalendar() {
   const { encodedUrl, encodedKeywords } = useParams<{ encodedUrl: string, encodedKeywords: string }>();
-  const location = useLocation();
   
   useEffect(() => {
-    // Instead of trying to handle the iCalendar content in React,
-    // redirect to the API endpoint that correctly sets MIME type headers
-    const apiUrl = `/api/calendar?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords}`;
-    window.location.href = apiUrl;
+    // Construct API URL - make sure this points to your backend API
+    // that properly sets Content-Type: text/calendar and formats the calendar correctly
+    const apiUrl = `/api/calendar?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords || ''}`;
+    
+    // Use window.location.replace for a cleaner redirect (no entry in browser history)
+    window.location.replace(apiUrl);
+    
+    // Optional: Log for debugging
+    console.log(`Redirecting to calendar API: ${apiUrl}`);
   }, [encodedUrl, encodedKeywords]);
 
-  // Show minimal loading UI while redirect happens
-  return (
-    <div style={{ display: 'none' }}>
-      Redirecting to calendar...
-    </div>
-  );
+  // Return an empty component since we're redirecting
+  return null;
 }
 
 function App() {
@@ -338,10 +338,12 @@ function App() {
       const encodedUrl = base64ToBase64url(btoa(calendarUrl));
       const encodedKeywords = base64ToBase64url(btoa(keywords));
       
-      // Use webcal:// protocol instead of http:// or https:// for better calendar client compatibility
-      // Use the current host without specifying the port
+      // Use webcal:// protocol for better calendar client compatibility
       const host = window.location.host;
-      return `webcal://${host}/calendar/${encodedUrl}/${encodedKeywords}/filtered.ics`;
+      
+      // Create a subscription URL that points directly to the API endpoint
+      // This bypasses any client-side rendering for better compatibility
+      return `webcal://${host}/api/calendar?encodedUrl=${encodedUrl}&encodedKeywords=${encodedKeywords}`;
     } catch (error) {
       console.error('Error encoding subscription URL:', error);
       return '';
