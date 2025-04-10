@@ -140,19 +140,22 @@ export default async function handler(req, res) {
     // Generate iCal content
     const icsContent = calendar.toString();
     
-    // Implementing the fical approach (https://github.com/nikolak/fical/blob/main/main.py)
-    // The key is extreme simplicity in the response - just the content type and the calendar data
+    // Set proper headers for iCalendar content
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="calendar.ics"');
+    // Add cache control headers to ensure fresh content
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     
-    // Set ONLY the content type without any additional parameters
-    // This matches exactly what fical does in their main.py Response object
-    res.setHeader('Content-Type', 'text/calendar');
-    
-    // No caching headers or disposition headers for webcal subscriptions
-    // fical doesn't use any additional headers that might confuse clients
+    // Ensure the calendar begins with proper iCalendar format identifier
+    // This is critical as some validators check for this specific string
+    const formattedIcsContent = icsContent.startsWith('BEGIN:VCALENDAR') 
+      ? icsContent 
+      : `BEGIN:VCALENDAR\r\n${icsContent.replace(/^BEGIN:VCALENDAR\r?\n?/, '')}`;
     
     // Simply send the calendar content with a 200 status code
-    // This bare-bones approach is what makes fical work reliably with various clients
-    res.status(200).send(icsContent);
+    res.status(200).send(formattedIcsContent);
   } catch (error) {
     console.error('Calendar API error:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
