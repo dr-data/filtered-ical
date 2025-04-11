@@ -333,37 +333,45 @@ function App() {
       .replace(/=+$/g, '');
   };
 
-  const getSubscriptionUrl = () => {ist
-    if (!calendarUrl) return '';let encodedKeywords = '';
+  const getSubscriptionUrl = () => {
+    if (!calendarUrl) return '';
     
     try {
       // Encode the URL as base64url
       const encodedUrl = base64ToBase64url(btoa(calendarUrl));
-      const encodedKeywords = keywords ? base64ToBase64url(btoa(keywords)) : ''; = window.location.host;
-       
-      const host = window.location.host;  // Use the subscription format with webcal:// protocol
-            // Include encoded keywords if present
-      // Use the subscription format with webcal:// protocol and direct path
-      return encodedKeywordsndar/${encodedUrl}/${encodedKeywords}/filtered.ics`;
-        ? `webcal://${host}/calendar/${encodedUrl}/${encodedKeywords}/filtered.ics`
-        : `webcal://${host}/calendar/${encodedUrl}/filtered.ics`;        return `webcal://${host}/calendar/${encodedUrl}/filtered.ics`;
+      
+      // Only encode keywords if they exist
+      let encodedKeywords = '';
+      if (keywords && keywords.trim()) {
+        encodedKeywords = base64ToBase64url(btoa(keywords.trim()));
+      }
+      
+      const host = window.location.host;
+      
+      // Use the subscription format with webcal:// protocol
+      // Include encoded keywords if present
+      if (encodedKeywords) {
+        return `webcal://${host}/calendar/${encodedUrl}/${encodedKeywords}/filtered.ics`;
+      } else {
+        return `webcal://${host}/calendar/${encodedUrl}/filtered.ics`;
+      }
     } catch (error) {
       console.error('Error encoding subscription URL:', error);
-      return '';rror encoding subscription URL:', error);
+      return '';
     }
   };
 
   const handleCopy = async () => {
-    const url = getSubscriptionUrl();nst handleCopy = async () => {
-    if (!url) return;    const url = getSubscriptionUrl();
+    const url = getSubscriptionUrl();
+    if (!url) return;
 
     try {
-      await navigator.clipboard.writeText(url);try {
-      setCopied(true);      await navigator.clipboard.writeText(url);
-      setTimeout(() => setCopied(false), 2000);opied(true);
-    } catch (err) {);
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
       console.error('Failed to copy URL:', err);
-    }err);
+    }
   };
 
   const handleDownload = () => {
@@ -372,145 +380,143 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-12">ray-50">
-        <div className="text-center mb-12">ame="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
-            <Calendar className="w-12 h-12 text-blue-600" />ex items-center justify-center mb-4">
-          </div>className="w-12 h-12 text-blue-600" />
+            <Calendar className="w-12 h-12 text-blue-600" />
+          </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">iCal Filter</h1>
-          <p className="text-xl text-gray-600">Filter your calendar events using keywords</p>ext-4xl font-bold text-gray-900 mb-4">iCal Filter</h1>
-        </div>text-gray-600">Filter your calendar events using keywords</p>
+          <p className="text-xl text-gray-600">Filter your calendar events using keywords</p>
+        </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <div className="space-y-6">
             <div>
-              <label htmlFor="calendarUrl" className="block text-sm font-medium text-gray-700 mb-2">>
-                Calendar URLel htmlFor="calendarUrl" className="block text-sm font-medium text-gray-700 mb-2">
-              </label>                Calendar URL
+              <label htmlFor="calendarUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                Calendar URL
+              </label>
               <input
                 type="url"
                 id="calendarUrl"
-                value={calendarUrl}lendarUrl"
-                onChange={(e) => setCalendarUrl(e.target.value)}e={calendarUrl}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"=> setCalendarUrl(e.target.value)}
-                placeholder="Enter iCal URL..."w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              />Enter iCal URL..."
+                value={calendarUrl}
+                onChange={(e) => setCalendarUrl(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter iCal URL..."
+              />
             </div>
 
             <div className="relative">
               <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 mb-2">
                 Filter Keywords
               </label>
-              <inputlabel>
+              <input
                 ref={inputRef}
                 type="text"
                 id="keywords"
-                value={keywords}s"
+                value={keywords}
                 onChange={handleKeywordChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => currentKeyword && setShowSuggestions(true)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"wSuggestions(true)}
-                placeholder="Enter keywords separated by commas (use ! to exclude)..." border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              />er="Enter keywords separated by commas (use ! to exclude)..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter keywords separated by commas (use ! to exclude)..."
+              />
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                  {suggestions.map((suggestion, index) => (className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                    <button((suggestion, index) => (
+                  {suggestions.map((suggestion, index) => (
+                    <button
                       key={index}
-                      className={`w-full px-4 py-2 text-left hover:bg-blue-50 focus:outline-none ${ key={index}
-                        index === selectedSuggestionIndex className={`w-full px-4 py-2 text-left hover:bg-blue-50 focus:outline-none ${
-                          ? 'bg-blue-100 text-blue-900'        index === selectedSuggestionIndex 
+                      className={`w-full px-4 py-2 text-left hover:bg-blue-50 focus:outline-none ${
+                        index === selectedSuggestionIndex 
+                          ? 'bg-blue-100 text-blue-900' 
                           : 'text-gray-900'
                       }`}
-                      onClick={() => handleSuggestionClick(suggestion)}    }`}
-                      onMouseEnter={() => setSelectedSuggestionIndex(index)}    onClick={() => handleSuggestionClick(suggestion)}
-                    >                      onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                    >
                       {suggestion}
                     </button>
-                  ))}utton>
-                </div>}
-              )}  </div>
-              <p className="mt-2 text-sm text-gray-500">              )}
-                Separate multiple keywords with commas. Use ! to exclude (e.g., "!meeting")0">
-              </p>ate multiple keywords with commas. Use ! to exclude (e.g., "!meeting")
+                  ))}
+                </div>
+              )}
+              <p className="mt-2 text-sm text-gray-500">
+                Separate multiple keywords with commas. Use ! to exclude (e.g., "!meeting")
+              </p>
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700">ror && (
-                {error}-red-200 rounded-md p-4 text-red-700">
+              <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700">
+                {error}
               </div>
-            )}
             )}
             <div className="flex flex-col space-y-4">
               <button
                 onClick={handleDownload}
-                disabled={loading || filteredEvents.length === 0}{handleDownload}
-                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"ed={loading || filteredEvents.length === 0}
-              >ex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading || filteredEvents.length === 0}
+                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Download className="w-5 h-5 mr-2" />
-                Download Filtered CalendarclassName="w-5 h-5 mr-2" />
+                Download Filtered Calendar
               </button>
-tton>
               <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">">
-                  Subscription URLext-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subscription URL
                 </label>
-                <input/label>
+                <input
                   type="text"
                   value={getSubscriptionUrl()}
-                  readOnly={getSubscriptionUrl()}
-                  className="w-full px-4 py-2 pr-24 border border-gray-300 rounded-md bg-gray-50"Only
-                />der border-gray-300 rounded-md bg-gray-50"
+                  readOnly
+                  className="w-full px-4 py-2 pr-24 border border-gray-300 rounded-md bg-gray-50"
+                />
                 <button
                   onClick={handleCopy}
-                  disabled={!calendarUrl}Click={handleCopy}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"d={!calendarUrl}
-                >assName="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!calendarUrl}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   {copied ? (
-                    <span className="text-green-600">Copied!</span>  {copied ? (
-                  ) : (      <span className="text-green-600">Copied!</span>
-                    <>                  ) : (
+                    <span className="text-green-600">Copied!</span>
+                  ) : (
+                    <>
                       <Copy className="w-4 h-4 mr-1" />
-                      Copy1" />
+                      Copy
                     </>
                   )}
                 </button>
               </div>
-            </div>>
-          </div>v>
-        </div>          </div>
+            </div>
+          </div>
+        </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center mb-4">assName="bg-white rounded-lg shadow-lg p-6">
-            <Filter className="w-5 h-5 text-blue-600 mr-2" />nter mb-4">
-            <h2 className="text-lg font-semibold">Filtered Events</h2>mr-2" />
+          <div className="flex items-center mb-4">
+            <Filter className="w-5 h-5 text-blue-600 mr-2" />
+            <h2 className="text-lg font-semibold">Filtered Events</h2>
             <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-              {filteredEvents.length} eventsunded-full">
+              {filteredEvents.length} events
             </span>
           </div>
 
           {loading ? (
             <div className="text-center py-8 text-gray-500">Loading events...</div>
-          ) : (me="text-center py-8 text-gray-500">Loading events...</div>
+          ) : (
             <div className="space-y-4">
-              {filteredEvents.map((event, index) => (className="space-y-4">
+              {filteredEvents.map((event, index) => (
                 <div key={index} className="border border-gray-200 rounded-md p-4">
-                  <h3 className="font-medium text-gray-900">{event.summary}</h3>00 rounded-md p-4">
-                  <div className="mt-2 text-sm text-gray-500">-900">{event.summary}</h3>
-                    <p> className="mt-2 text-sm text-gray-500">
-                      {new Date(event.startDate).toLocaleString()} - {new Date(event.endDate).toLocaleString()}    <p>
-                    </p>    {new Date(event.startDate).toLocaleString()} - {new Date(event.endDate).toLocaleString()}
-                    {event.location && <p className="mt-1">{event.location}</p>}        </p>
-                  </div>      {event.location && <p className="mt-1">{event.location}</p>}
-                </div>      </div>
-              ))}      </div>
-              {filteredEvents.length === 0 && !loading && (          ))}
-                <div className="text-center py-8 text-gray-500">             {filteredEvents.length === 0 && !loading && (
-                  No events match your filter criteria                <div className="text-center py-8 text-gray-500">
-                </div>lter criteria
+                  <h3 className="font-medium text-gray-900">{event.summary}</h3>
+                  <div className="mt-2 text-sm text-gray-500">
+                    <p>
+                      {new Date(event.startDate).toLocaleString()} - {new Date(event.endDate).toLocaleString()}
+                    </p>
+                    {event.location && <p className="mt-1">{event.location}</p>}
+                  </div>
+                </div>
+              ))}
+              {filteredEvents.length === 0 && !loading && (
+                <div className="text-center py-8 text-gray-500">
+                  No events match your filter criteria
+                </div>
               )}
             </div>
-          )}</div>
+          )}
         </div>
       </div>
     </div>
@@ -518,24 +524,13 @@ tton>
 }
 
 // Wrap the App export with BrowserRouter
-const AppWithRouter = () => (rowserRouter
-
-
-
-
-
-
-
-
-
-
-
-export default AppWithRouter;);  </BrowserRouter>    </Routes>      <Route path="/calendar/:encodedUrl/:encodedKeywords/filtered.ics" element={<SubscriptionCalendar />} />      <Route path="/calendar/:encodedUrl/filtered.ics" element={<SubscriptionCalendar />} />      <Route path="/calendar/filtered" element={<FilteredCalendar />} />      <Route path="/" element={<App />} />    <Routes>  <BrowserRouter>const AppWithRouter = () => (
+const AppWithRouter = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/calendar/filtered" element={<FilteredCalendar />} />
       <Route path="/calendar/:encodedUrl/filtered.ics" element={<SubscriptionCalendar />} />
+      <Route path="/calendar/:encodedUrl/:encodedKeywords/filtered.ics" element={<SubscriptionCalendar />} />
     </Routes>
   </BrowserRouter>
 );
