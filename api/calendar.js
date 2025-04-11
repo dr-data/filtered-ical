@@ -71,10 +71,12 @@ export default async function handler(req, res) {
     // fiCal doesn't add many properties, just keeps the original with filtered events
     calendar.updatePropertyWithValue('prodid', '-//iCal Filter//EN');
     calendar.updatePropertyWithValue('version', '2.0');
+    calendar.updatePropertyWithValue('calscale', 'GREGORIAN');
+    calendar.updatePropertyWithValue('method', 'PUBLISH');
     
     // Add filtered events to the calendar
     events.forEach(event => {
-      const vevent = new ICAL.Component('vevent');
+      const vevent = new ICAL.Component(['vevent', [], []]); // Ensure vevent is properly initialized
       
       // Convert dates to ICAL.Time
       const startDate = ICAL.Time.fromJSDate(new Date(event.startDate), true);
