@@ -110,11 +110,11 @@ function FilteredCalendar() {
 // New component to handle subscription calendar requests with path parameters
 function SubscriptionCalendar() {
   const { encodedUrl } = useParams<{ encodedUrl: string }>();
-  
+
   useEffect(() => {
     // Redirect directly to our dedicated iCalendar subscription API
-    const subscriptionUrl = `/api/calendar?encodedUrl=${encodedUrl}`;
-    
+    const subscriptionUrl = `/api/filtered/${encodedUrl}`;
+
     // Use replace to avoid adding to browser history
     window.location.replace(subscriptionUrl);
   }, [encodedUrl]);
