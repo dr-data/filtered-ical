@@ -335,8 +335,8 @@ function App() {
       
       const host = window.location.host;
       
-      // Use the subscription format with webcal:// protocol
-      return `webcal://${host}/api/calendar?encodedUrl=${encodedUrl}`;
+      // Use the subscription format with webcal:// protocol and direct path
+      return `webcal://${host}/calendar/${encodedUrl}/filtered.ics`;
     } catch (error) {
       console.error('Error encoding subscription URL:', error);
       return '';
